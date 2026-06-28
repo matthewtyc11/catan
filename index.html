@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>卡坦島隨身骰子</title>
-    <style> 
+    <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background-color: #f4f4f9;
             color: #333;
-            max-width: 600px;
+            max-width: 900px;
             margin: 0 auto;
             padding: 20px;
             text-align: center;
@@ -22,6 +22,21 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             margin-bottom: 20px;
         }
+        
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        @media (min-width: 650px) {
+            .game-container {
+                flex-direction: row;
+                align-items: flex-start;
+            }
+            #game-stage { flex: 1.3; }
+            #history-stage { flex: 1; }
+        }
+
         input[type="text"] {
             padding: 10px;
             width: 65%;
@@ -42,6 +57,7 @@
         }
         button:hover { background-color: #d35400; }
         .hidden { display: none; }
+        
         .player-tag {
             display: inline-block;
             background: #e8f8f5;
@@ -52,7 +68,6 @@
             font-size: 15px;
             transition: all 0.3s ease;
         }
-        /* 當前玩家的高亮樣式 */
         .player-tag.active-now {
             background-color: #e67e22;
             color: white;
@@ -61,37 +76,57 @@
             box-shadow: 0 2px 4px rgba(230,126,34,0.4);
         }
         .current-turn {
-            font-size: 24px;
+            font-size: 26px;
             font-weight: bold;
             color: #2c3e50;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        
+        /* 巨型擲骰按鈕 */
+        .btn-roll {
+            font-size: 28px; 
+            padding: 20px 50px; 
+            width: 90%; 
+            font-weight: bold;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(230,126,34,0.3);
+            margin-top: 15px;
+        }
+
+        /* 骰子與結果垂直排列區 */
+        .result-layout {
+            margin: 20px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        .total-score {
+            font-size: 90px; /* 再稍微放大總和點數 */
+            font-weight: bold;
+            color: #d35400;
+            line-height: 1;
         }
         .dice-container {
             display: flex;
             justify-content: center;
-            gap: 20px;
-            margin: 20px 0;
+            gap: 25px;
         }
         .dice {
-            width: 65px;
-            height: 65px;
+            width: 70px;
+            height: 70px;
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 32px;
+            font-size: 36px;
             font-weight: bold;
             color: white;
             box-shadow: 0 4px 4px rgba(0,0,0,0.15);
         }
         .dice-red { background-color: #e74c3c; }
         .dice-yellow { background-color: #f1c40f; color: #2c3e50; }
-        .total-score {
-            font-size: 54px;
-            font-weight: bold;
-            color: #d35400;
-            margin: 10px 0;
-        }
+        
         .robber-alert {
             color: #c0392b;
             font-weight: bold;
@@ -100,7 +135,7 @@
         }
         .history-list {
             text-align: left;
-            max-height: 220px;
+            height: 340px;
             overflow-y: auto;
             background: #eee;
             padding: 10px 15px;
@@ -118,6 +153,7 @@
             font-size: 14px;
             padding: 8px 15px;
             margin-top: 15px;
+            width: 100%;
         }
         .btn-reset:hover { background-color: #95a5a6; }
         .order-title {
@@ -142,31 +178,40 @@
         <button id="start-game-btn" onclick="startGame()" class="hidden" style="background-color: #27ae60;">開始遊戲</button>
     </div>
 
-    <!-- 步驟 2：遊戲進行 -->
-    <div id="game-stage" class="card hidden">
-        <!-- 新增的玩家順序面板 -->
-        <div class="order-title">玩家順序：</div>
-        <div id="game-player-order" style="margin-bottom: 20px; text-align: left;"></div>
-        <hr style="border: 0; border-top: 1px solid #eee; margin-bottom: 20px;">
+    <!-- 左右並排容器 -->
+    <div class="game-container">
+        <!-- 步驟 2：遊戲進行 -->
+        <div id="game-stage" class="card hidden">
+            <div class="order-title">玩家順序：</div>
+            <div id="game-player-order" style="margin-bottom: 20px; text-align: left;"></div>
+            <hr style="border: 0; border-top: 1px solid #eee; margin-bottom: 20px;">
 
-        <div class="current-turn">當前輪到：<span id="active-player" style="color: #e67e22;"></span></div>
-        
-        <button onclick="rollDice()" style="font-size: 22px; padding: 12px 40px; width: 80%;">擲骰！</button>
+            <div class="current-turn">當前輪到：<span id="active-player" style="color: #e67e22;"></span></div>
+            
+            <!-- 垂直排列區：上總和、中骰子、下按鈕 -->
+            <div class="result-layout">
+                <!-- 上：總和數字 -->
+                <div class="total-score" id="total-result">-</div>
+                
+                <!-- 中：實體骰子 -->
+                <div class="dice-container">
+                    <div id="dice1" class="dice dice-red">-</div>
+                    <div id="dice2" class="dice dice-yellow">-</div>
+                </div>
+            </div>
 
-        <div class="dice-container">
-            <div id="dice1" class="dice dice-red">-</div>
-            <div id="dice2" class="dice dice-yellow">-</div>
+            <!-- 下：擲骰按鈕 -->
+            <button onclick="rollDice()" class="btn-roll">擲骰！</button>
+
+            <div id="robber-notice" class="robber-alert hidden">⚠️ 點數 7！強盜來了！請檢查手牌。</div>
         </div>
 
-        <div class="total-score" id="total-result">-</div>
-        <div id="robber-notice" class="robber-alert hidden">⚠️ 點數 7！強盜來了！請檢查手牌。</div>
-    </div>
-
-    <!-- 步驟 3：歷史紀錄 -->
-    <div id="history-stage" class="card hidden">
-        <h3>擲骰歷史紀錄</h3>
-        <ul id="history-log" class="history-list"></ul>
-        <button class="btn-reset" onclick="resetGame()">重設並清除所有資料</button>
+        <!-- 步驟 3：歷史紀錄 -->
+        <div id="history-stage" class="card hidden">
+            <h3>歷史紀錄</h3>
+            <ul id="history-log" class="history-list"></ul>
+            <button class="btn-reset" onclick="resetGame()">重設並清除所有資料</button>
+        </div>
     </div>
 
     <script>
@@ -237,16 +282,14 @@
             log.innerHTML = gameData.history.map(item => `<li>${item}</li>`).join('');
         }
 
-        // 更新當前輪到的玩家以及上方的順序高亮
         function updateTurnDisplay() {
             document.getElementById('active-player').innerText = gameData.players[gameData.currentPlayerIndex];
             
-            // 動態更新上方的玩家順序表
             const orderContainer = document.getElementById('game-player-order');
             orderContainer.innerHTML = gameData.players.map((p, idx) => {
                 const isActive = idx === gameData.currentPlayerIndex ? 'active-now' : '';
                 return `<span class="player-tag ${isActive}">${idx + 1}. ${p}</span>`;
-            }).join(' ➔ '); // 用箭頭串聯展現輪替順序
+            }).join(' ➔ ');
         }
 
         function rollDice() {
@@ -255,9 +298,9 @@
             const total = d1 + d2;
             const roller = gameData.players[gameData.currentPlayerIndex];
 
+            document.getElementById('total-result').innerText = total;
             document.getElementById('dice1').innerText = d1;
             document.getElementById('dice2').innerText = d2;
-            document.getElementById('total-result').innerText = total;
 
             const robberNotice = document.getElementById('robber-notice');
             if (total === 7) {
@@ -266,7 +309,7 @@
                 robberNotice.classList.add('hidden');
             }
 
-            const logHtml = `#${gameData.rollCount} <strong>${roller}</strong> 擲出了 <strong>${total}</strong> 點 (${d1} + ${d2})`;
+            const logHtml = `#${gameData.rollCount} <strong>${roller}</strong> ➡️ <strong>${total}</strong> 點 (${d1}+${d2})`;
             gameData.history.unshift(logHtml);
 
             const log = document.getElementById('history-log');
